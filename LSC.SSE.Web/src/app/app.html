@@ -1,0 +1,61 @@
+<div class="chat-container">
+
+  <header class="chat-header">
+    <span class="header-title">AI Chat</span>
+    <button class="clear-btn" (click)="clearChat()" [disabled]="isStreaming()">
+      Clear
+    </button>
+  </header>
+
+  <div class="messages-area">
+
+    <div *ngIf="messages().length === 0" class="empty-state">
+      Start a conversation below ↓
+    </div>
+
+    <div *ngFor="let msg of messages()"
+         class="message-row"
+         [class.user-row]="msg.role === 'user'"
+         [class.assistant-row]="msg.role === 'assistant'">
+
+      <div class="bubble"
+           [class.user-bubble]="msg.role === 'user'"
+           [class.assistant-bubble]="msg.role === 'assistant'">
+        <pre class="message-text">{{ msg.content }}<span
+          *ngIf="msg.streaming" class="cursor">▍</span></pre>
+      </div>
+
+    </div>
+
+    <div *ngIf="errorMsg()" class="error-banner">{{ errorMsg() }}</div>
+
+    <div #messagesEnd></div>
+  </div>
+
+  <div class="input-area">
+    <textarea
+      [(ngModel)]="userInput"
+      (keydown)="onKeyDown($event)"
+      placeholder="Message AI… (Enter to send, Shift+Enter for newline)"
+      rows="1"
+      [disabled]="isStreaming()"
+      class="input-box">
+    </textarea>
+
+    <button *ngIf="!isStreaming()"
+            (click)="sendMessage()"
+            [disabled]="!userInput.trim()"
+            class="send-btn">
+      Send
+    </button>
+
+    <button *ngIf="isStreaming()"
+            (click)="stopStreaming()"
+            class="stop-btn">
+      ■ Stop
+    </button>
+  </div>
+
+</div>
+
+<router-outlet />
