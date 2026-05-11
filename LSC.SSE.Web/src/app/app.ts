@@ -1,4 +1,4 @@
-import { Component, ElementRef, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, signal, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ChatMessage } from './models/chat.model';
 import { ChatService } from './services/chat.service';
@@ -9,7 +9,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-root',
   imports: [RouterOutlet, CommonModule, FormsModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   protected readonly title = signal('lsc.sse.web');
@@ -21,11 +22,19 @@ export class App {
   errorMsg    = signal('');
 
   private cancelStream?: () => void;
+  private needsScroll  = false;
 
   constructor(private chatService: ChatService) {}
 
   ngAfterViewChecked(): void {
-    this.scrollToBottom();
+    if (this.needsScroll) {
+      this.scrollToBottom();
+      this.needsScroll = false;
+    }
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 
   sendMessage(): void {
@@ -39,7 +48,8 @@ export class App {
       ...msgs,
       { role: 'user', content: text },
     ]);
-    this.userInput = '';
+    this.userInput   = '';
+    this.needsScroll = true;
 
     // 2. Add an empty placeholder for the assistant reply
     this.messages.update(msgs => [
@@ -68,6 +78,7 @@ export class App {
           };
           return updated;
         });
+        this.needsScroll = true;
       },
 
       // onDone — mark streaming complete
@@ -120,7 +131,7 @@ export class App {
 
   private scrollToBottom(): void {
     try {
-      this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'auto' });
     } catch { /* ignore */ }
   }
 }

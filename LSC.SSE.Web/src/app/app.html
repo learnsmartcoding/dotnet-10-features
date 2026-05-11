@@ -1,8 +1,26 @@
 <div class="chat-container">
 
   <header class="chat-header">
-    <span class="header-title">AI Chat</span>
-    <button class="clear-btn" (click)="clearChat()" [disabled]="isStreaming()">
+    <div class="header-left">
+      <div class="header-avatar">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+        </svg>
+      </div>
+      <div class="header-info">
+        <span class="header-title">AI Assistant</span>
+        <span class="header-status">
+          <span class="status-dot" [class.active]="!isStreaming()"></span>
+          {{ isStreaming() ? 'Thinking…' : 'Online' }}
+        </span>
+      </div>
+    </div>
+
+    <button class="clear-btn" (click)="clearChat()" [disabled]="isStreaming()" title="Clear chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+      </svg>
       Clear
     </button>
   </header>
@@ -10,13 +28,33 @@
   <div class="messages-area">
 
     <div *ngIf="messages().length === 0" class="empty-state">
-      Start a conversation below ↓
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <h2 class="empty-title">How can I help you today?</h2>
+      <p class="empty-subtitle">Ask me anything — I'll respond in real time.</p>
+      <div class="suggestion-chips">
+        <button class="chip" (click)="userInput = 'Explain how Server-Sent Events work'">Explain SSE</button>
+        <button class="chip" (click)="userInput = 'Write a simple Angular signal example'">Angular Signals</button>
+        <button class="chip" (click)="userInput = 'What is new in .NET 10?'">What is new in .NET 10</button>
+      </div>
     </div>
 
-    <div *ngFor="let msg of messages()"
+    <div *ngFor="let msg of messages(); trackBy: trackByIndex"
          class="message-row"
          [class.user-row]="msg.role === 'user'"
          [class.assistant-row]="msg.role === 'assistant'">
+
+      <div class="avatar" [class.user-avatar]="msg.role === 'user'">
+        <svg *ngIf="msg.role === 'assistant'" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+        </svg>
+        <svg *ngIf="msg.role === 'user'" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+        </svg>
+      </div>
 
       <div class="bubble"
            [class.user-bubble]="msg.role === 'user'"
@@ -27,33 +65,49 @@
 
     </div>
 
-    <div *ngIf="errorMsg()" class="error-banner">{{ errorMsg() }}</div>
+    <div *ngIf="errorMsg()" class="error-banner">
+      <svg class="error-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      {{ errorMsg() }}
+    </div>
 
     <div #messagesEnd></div>
   </div>
 
   <div class="input-area">
-    <textarea
-      [(ngModel)]="userInput"
-      (keydown)="onKeyDown($event)"
-      placeholder="Message AI… (Enter to send, Shift+Enter for newline)"
-      rows="1"
-      [disabled]="isStreaming()"
-      class="input-box">
-    </textarea>
+    <div class="input-wrapper">
+      <textarea
+        [(ngModel)]="userInput"
+        (keydown)="onKeyDown($event)"
+        placeholder="Message AI… (Enter to send, Shift+Enter for newline)"
+        rows="1"
+        [disabled]="isStreaming()"
+        class="input-box">
+      </textarea>
 
-    <button *ngIf="!isStreaming()"
-            (click)="sendMessage()"
-            [disabled]="!userInput.trim()"
-            class="send-btn">
-      Send
-    </button>
+      <div class="input-actions">
+        <button *ngIf="!isStreaming()"
+                (click)="sendMessage()"
+                [disabled]="!userInput.trim()"
+                class="send-btn"
+                title="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
 
-    <button *ngIf="isStreaming()"
-            (click)="stopStreaming()"
-            class="stop-btn">
-      ■ Stop
-    </button>
+        <button *ngIf="isStreaming()"
+                (click)="stopStreaming()"
+                class="stop-btn"
+                title="Stop generation">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <p class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</p>
   </div>
 
 </div>
